@@ -73,7 +73,7 @@ public final class CommandDispatcher {
 
                 if (handler == null) {
                         handleUnknownCommand(context);
-                       
+                        return;
                 }
 
                 handler.execute(context);

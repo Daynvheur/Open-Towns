@@ -34,8 +34,9 @@ public final class MenuXmlLoader {
 
             String menuId = required(menuElement, "id", file);
             String titleKey = required(menuElement, "titleKey", file);
+            boolean transparent = optionalBoolean(menuElement, "transparent", true);
 
-            MenuDefinition menuDefinition = new MenuDefinition(menuId, titleKey);
+            MenuDefinition menuDefinition = new MenuDefinition(menuId, titleKey, transparent);
 
             NodeList childNodes = menuElement.getChildNodes();
 
@@ -73,7 +74,10 @@ public final class MenuXmlLoader {
         String provider = optional(itemElement, "provider");
         String key = optional(itemElement, "key");
         String condition = optional(itemElement, "condition");
-        String textColorName = optional(itemElement, "textColorName");
+        String textColorName = optional(itemElement, "textColor");
+        if (textColorName == null) {
+            textColorName = optional(itemElement, "textColorName");
+        }
         boolean transparent = optionalBoolean(itemElement, "transparent", true);
 
         return new MenuItemDefinition(
