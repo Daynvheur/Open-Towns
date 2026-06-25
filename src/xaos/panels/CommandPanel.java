@@ -21,7 +21,9 @@ import xaos.events.EventManagerItem;
 import xaos.main.Game;
 import xaos.main.World;
 import xaos.panels.menus.ContextMenu;
-import xaos.panels.menus.IngameOptionsMenu;
+
+import xaos.panels.menus.MenuDefinition;
+import xaos.panels.menus.MenuManager;
 import xaos.panels.menus.SmartMenu;
 import xaos.stockpiles.Stockpile;
 import xaos.tasks.Task;
@@ -233,6 +235,7 @@ public final class CommandPanel {
     public int renderY;
     public int renderWidth;
     public int renderHeight;
+    public static ContextMenu escapeMenu;
 
     public CommandPanel(int renderX, int renderY, int renderWidth, int renderHeight, String sCampaignID,
             String sMissionID) {
@@ -247,6 +250,21 @@ public final class CommandPanel {
     private static void loadMenu(String sCampaignID, String sMissionID) {
         currentMenu = new SmartMenu();
         SmartMenu.readXMLMenu(currentMenu, "menu.xml", sCampaignID, sMissionID); //$NON-NLS-1$
+    }
+
+    private static ContextMenu createEscapeMenu() {
+
+        ContextMenu menuExit = new ContextMenu();
+
+        MenuManager menuManager = new MenuManager();
+        menuManager.loadMenus(new File("data/menus/game"));
+
+        MenuDefinition optionsMenu = menuManager.getMenu("game.root");
+        SmartMenu menu = menuManager.buildSmartMenu(optionsMenu, null);
+        menu.setTrasparency(false);
+        menuExit.setSmartMenu(menu);
+        return menuExit;
+
     }
 
     /**
@@ -899,38 +917,7 @@ public final class CommandPanel {
                 if (Game.getCurrentState() == Game.STATE_CREATING_TASK) {
                     Game.deleteCurrentTask();
                 }
-                ContextMenu menuExit = new ContextMenu();
-                SmartMenu smExit = new SmartMenu();
-                if (TownsProperties.DEBUG_MODE) {
-                    smExit.addItem(new SmartMenu(SmartMenu.TYPE_ITEM, "Admin save, no mission", null, //$NON-NLS-1$
-                            COMMAND_SAVE_NO_MISSIONDATA, null));
-                    smExit.addItem(new SmartMenu(SmartMenu.TYPE_TEXT, null, null, null, null));
-                }
-                smExit.addItem(new SmartMenu(SmartMenu.TYPE_ITEM, Messages.getString("CommandPanel.4"), null, //$NON-NLS-1$
-                        COMMAND_SAVE, null));
-                smExit.addItem(new SmartMenu(SmartMenu.TYPE_TEXT, null, null, null, null));
-                smExit.addItem(new SmartMenu(SmartMenu.TYPE_ITEM, Messages.getString("CommandPanel.0"), null, //$NON-NLS-1$
-                        COMMAND_EXIT_TO_MAIN_MENU_SAVE, null));
-                smExit.addItem(new SmartMenu(SmartMenu.TYPE_TEXT, null, null, null, null));
-                SmartMenu smSure = new SmartMenu(SmartMenu.TYPE_MENU, Messages.getString("CommandPanel.1"), smExit, //$NON-NLS-1$
-                        null, null);
-                smSure.addItem(new SmartMenu(SmartMenu.TYPE_ITEM, Messages.getString("CommandPanel.3"), null, //$NON-NLS-1$
-                        COMMAND_EXIT_TO_MAIN_MENU_NOSAVE, null));
-                smSure.addItem(new SmartMenu(SmartMenu.TYPE_TEXT, null, null, null, null));
-                smExit.addItem(new SmartMenu(SmartMenu.TYPE_ITEM, Messages.getString("CommandPanel.7"), null, //$NON-NLS-1$
-                        COMMAND_BURY, null));
-                smExit.addItem(new SmartMenu(SmartMenu.TYPE_TEXT, null, null, null, null));
-                smSure.addItem(new SmartMenu(SmartMenu.TYPE_ITEM, Messages.getString("CommandPanel.5"), null, //$NON-NLS-1$
-                        COMMAND_BACK, null));
-
-                smExit.addItem(smSure);
-
-                smExit.addItem(new SmartMenu(SmartMenu.TYPE_TEXT, null, null, null, null));
-                smExit.addItem(IngameOptionsMenu.createOptionsMenu(smExit));
-                smExit.addItem(new SmartMenu(SmartMenu.TYPE_TEXT, null, null, null, null));
-                smExit.addItem(new SmartMenu(SmartMenu.TYPE_ITEM, Messages.getString("CommandPanel.2"), null, //$NON-NLS-1$
-                        COMMAND_CLOSE_CONTEXT, null));
-                menuExit.setSmartMenu(smExit);
+                ContextMenu menuExit = createEscapeMenu();
                 menuExit.setX(UtilsGL.getWidth() / 2 - menuExit.getWidth() / 2);
                 menuExit.setY(UtilsGL.getHeight() / 2 - menuExit.getHeight() / 2);
                 Game.setContextMenu(menuExit);
