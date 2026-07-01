@@ -115,6 +115,7 @@ public final class MainPanel {
 
 	private static int worldZoomIndex = 9;
 	private static float worldZoom = WORLD_ZOOM_VALUES[worldZoomIndex];
+	private static boolean zoomOnCursor = true;
 
 	public static float getWorldZoom() {
 		return worldZoom;
@@ -133,19 +134,27 @@ public final class MainPanel {
 	}
 
 	public static void zoomWorldIn() {
-		zoomWorldIn(0, 0, false);
+		zoomWorldIn(0, 0);
 	}
 
 	public static void zoomWorldOut() {
-		zoomWorldOut(0, 0, false);
+		zoomWorldOut(0, 0);
 	}
 
 	public static void zoomWorldIn(int mouseX, int mouseY) {
-		zoomWorldIn(mouseX, mouseY, true);
+		zoomWorldIn(mouseX, mouseY, zoomOnCursor);
 	}
 
 	public static void zoomWorldOut(int mouseX, int mouseY) {
-		zoomWorldOut(mouseX, mouseY, true);
+		zoomWorldOut(mouseX, mouseY, zoomOnCursor);
+	}
+
+	public static boolean isZoomOnCursor() {
+		return zoomOnCursor;
+	}
+
+	public static void setZoomOnCursor(boolean zoomOnCursor) {
+		MainPanel.zoomOnCursor = zoomOnCursor;
 	}
 
 	private static void zoomWorldIn(int mouseX, int mouseY, boolean adjustCamera) {
