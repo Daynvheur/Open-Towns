@@ -73,6 +73,7 @@ pip-delete-this-directory.txt
 # IDEs / Editors
 # ------------------------------------------------------------
 .vscode/
+.vs/
 .idea/
 *.iml
 
@@ -207,9 +208,9 @@ artifacts-*/
 # These are copied from an installed Towns release and should
 # not be committed to the public repo.
 # ------------------------------------------------------------
-/src/data/audio/
-/src/data/fonts/
-/src/data/graphics/
+#/src/data/audio/
+#/src/data/fonts/
+#/src/data/graphics/
 
 # Optional local save/debug/runtime folders
 /saves/
