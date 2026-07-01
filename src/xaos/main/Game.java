@@ -1082,10 +1082,14 @@ public static void taskCreated(Task task) {
 		if (!ctrlDown) {
 			return false;
 		}
+
+		int mouseX = Mouse.getX();
+		int mouseY = renderHeight - Mouse.getY() - 1;
+
 		if (wheelDelta > 0) {
-			MainPanel.zoomWorldIn();
+			MainPanel.zoomWorldIn(mouseX, mouseY);
 		} else {
-			MainPanel.zoomWorldOut();
+			MainPanel.zoomWorldOut(mouseX, mouseY);
 		}
 
 		return true;
