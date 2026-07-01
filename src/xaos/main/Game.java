@@ -1123,14 +1123,10 @@ public static void taskCreated(Task task) {
 			int eventMouseX = Mouse.getEventX();
 			int eventMouseY = UtilsGL.getHeight() - Mouse.getEventY() - 1;
 
-			// Debug: log every mouse button event
-			Log.log(Log.LEVEL_DEBUG, "Mouse button event: button=" + mouseButton + " state=" + Mouse.getEventButtonState(), getClass().toString());
-
 			// Deactivate pan mode on any mouse interaction (except middle button which is handled separately)
 			if (togglePanMode && mouseButton != 2) {
 				togglePanMode = false;
 				middleButtonScrolling = false;
-				Log.log(Log.LEVEL_DEBUG, "Pan mode deactivated by mouse button " + mouseButton, getClass().toString());
 			}
 
 			// Middle button scroll for camera panning (both press and release)
@@ -1142,7 +1138,6 @@ public static void taskCreated(Task task) {
 						lastMouseX = eventMouseX;
 						lastMouseY = eventMouseY;
 						movementOccurred = false;
-						Log.log(Log.LEVEL_DEBUG, "Middle button pressed - middleButtonScrolling activated", getClass().toString());
 					}
 				} else {
 					// Middle button released
@@ -1153,16 +1148,12 @@ public static void taskCreated(Task task) {
 							if (togglePanMode) {
 								lastMouseX = eventMouseX;
 								lastMouseY = eventMouseY;
-								Log.log(Log.LEVEL_DEBUG, "Pan mode activated (toggle)", getClass().toString());
-							} else {
-								Log.log(Log.LEVEL_DEBUG, "Pan mode deactivated (toggle)", getClass().toString());
 							}
 						}
 						middleButtonScrolling = false;
 					} else if (togglePanMode) {
 						// Pan mode was active, deactivate it
 						togglePanMode = false;
-						Log.log(Log.LEVEL_DEBUG, "Pan mode deactivated by middle button release", getClass().toString());
 					}
 				}
 				continue;
