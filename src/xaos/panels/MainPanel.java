@@ -215,6 +215,22 @@ public final class MainPanel {
 		Game.getWorld().setView(newXView, newYView);
 	}
 
+	public static void scrollCamera(int dx, int dy) {
+		int xView = Game.getWorld().getView().x;
+		int yView = Game.getWorld().getView().y;
+
+		float zoom = getWorldZoom();
+		float sensitivity = 0.05f / zoom;
+
+		float deltaXView = -(dx + dy) * sensitivity;
+		float deltaYView = (dx - dy) * sensitivity;
+
+		int newXView = Math.round(xView + deltaXView);
+		int newYView = Math.round(yView + deltaYView);
+
+		Game.getWorld().setView(newXView, newYView);
+	}
+
 	public static void cycleWorldZoom() {
 		worldZoomIndex++;
 

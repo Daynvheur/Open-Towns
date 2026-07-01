@@ -161,6 +161,7 @@ public final class Game {
 	private static boolean FXON;
 	private static boolean mouseScrollON;
 	private static boolean mouseScrollEarsON;
+	private static boolean mouseScrollMiddleButtonON;
 	private static boolean mouse2DCubesON;
 	private static boolean disabledItemsON;
 	private static boolean disabledGodsON;
@@ -182,6 +183,9 @@ public final class Game {
 
 	private boolean displayFullscreen = false;
 	private static boolean godMode = false;
+	private static boolean middleButtonScrolling = false;
+	private static int lastMouseX = 0;
+	private static int lastMouseY = 0;
 
 	public static boolean isGodMode() {
 		return godMode;
@@ -221,6 +225,7 @@ public final class Game {
 		// Game options
 		mouseScrollON = Boolean.parseBoolean(Towns.getPropertiesString("MOUSE_SCROLL")); //$NON-NLS-1$
 		mouseScrollEarsON = Boolean.parseBoolean(Towns.getPropertiesString("MOUSE_SCROLL_EARS")); //$NON-NLS-1$
+		mouseScrollMiddleButtonON = Boolean.parseBoolean(Towns.getPropertiesString("MOUSE_SCROLL_MIDDLE_BUTTON")); //$NON-NLS-1$
 		mouse2DCubesON = Boolean.parseBoolean(Towns.getPropertiesString("MOUSE_2D_CUBES")); //$NON-NLS-1$
 		disabledItemsON = Boolean.parseBoolean(Towns.getPropertiesString("DISABLED_ITEMS")); //$NON-NLS-1$
 		disabledGodsON = Boolean.parseBoolean(Towns.getPropertiesString("DISABLED_GODS")); //$NON-NLS-1$
@@ -1109,6 +1114,19 @@ public static void taskCreated(Task task) {
 			mouseButton = Mouse.getEventButton();
 
 			if (Mouse.getEventButtonState()) {
+				// Middle button scroll for camera panning
+				if (mouseButton == 2 && mouseScrollMiddleButtonON) {
+					if (!middleButtonScrolling) {
+						middleButtonScrolling = true;
+						lastMouseX = mouseX;
+						lastMouseY = mouseY;
+					}
+					continue;
+				} else if (mouseButton == 2 && middleButtonScrolling) {
+					middleButtonScrolling = false;
+					continue;
+				}
+
 				// Main menu
 				if (getPanelMainMenu().isActive()) {
 					getPanelMainMenu().mousePressed(mouseX, mouseY, mouseButton);
@@ -1186,6 +1204,20 @@ public static void taskCreated(Task task) {
 					}
 				}
 			}
+
+			// Middle button scroll for camera panning (movement while button held)
+			if (middleButtonScrolling && mouseScrollMiddleButtonON) {
+				int dx = mouseX - lastMouseX;
+				int dy = mouseY - lastMouseY;
+
+				if (dx != 0 || dy != 0) {
+					MainPanel.scrollCamera(dx, dy);
+					lastMouseX = mouseX;
+					lastMouseY = mouseY;
+				}
+				continue;
+			}
+
 			if (handleWorldZoomMouseWheel()) {
 				return;
 			}
@@ -2009,6 +2041,14 @@ public static void taskCreated(Task task) {
 
 	public static boolean isMouseScrollEarsON() {
 		return mouseScrollEarsON;
+	}
+
+	public static void setMouseScrollMiddleButtonON(boolean mouseScrollMiddleButtonON) {
+		Game.mouseScrollMiddleButtonON = mouseScrollMiddleButtonON;
+	}
+
+	public static boolean isMouseScrollMiddleButtonON() {
+		return mouseScrollMiddleButtonON;
 	}
 
 	public static void setMouse2DCubesON(boolean mouse2DCubesON) {
