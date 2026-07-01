@@ -162,6 +162,7 @@ public final class Game {
 	private static boolean mouseScrollON;
 	private static boolean mouseScrollEarsON;
 	private static boolean mouseScrollMiddleButtonON;
+	private static boolean panOnCamera;
 	private static boolean mouse2DCubesON;
 	private static boolean disabledItemsON;
 	private static boolean disabledGodsON;
@@ -184,8 +185,10 @@ public final class Game {
 	private boolean displayFullscreen = false;
 	private static boolean godMode = false;
 	private static boolean middleButtonScrolling = false;
+	private static boolean togglePanMode = false;
 	private static int lastMouseX = 0;
 	private static int lastMouseY = 0;
+	private static boolean movementOccurred = false;
 
 	public static boolean isGodMode() {
 		return godMode;
@@ -226,6 +229,8 @@ public final class Game {
 		mouseScrollON = Boolean.parseBoolean(Towns.getPropertiesString("MOUSE_SCROLL")); //$NON-NLS-1$
 		mouseScrollEarsON = Boolean.parseBoolean(Towns.getPropertiesString("MOUSE_SCROLL_EARS")); //$NON-NLS-1$
 		mouseScrollMiddleButtonON = Boolean.parseBoolean(Towns.getPropertiesString("MOUSE_SCROLL_MIDDLE_BUTTON")); //$NON-NLS-1$
+		panOnCamera = Boolean.parseBoolean(Towns.getPropertiesString("PAN_ON_CAMERA")); //$NON-NLS-1$
+		boolean zoomOnCursorValue = Boolean.parseBoolean(Towns.getPropertiesString("ZOOM_ON_CURSOR")); //$NON-NLS-1$
 		mouse2DCubesON = Boolean.parseBoolean(Towns.getPropertiesString("MOUSE_2D_CUBES")); //$NON-NLS-1$
 		disabledItemsON = Boolean.parseBoolean(Towns.getPropertiesString("DISABLED_ITEMS")); //$NON-NLS-1$
 		disabledGodsON = Boolean.parseBoolean(Towns.getPropertiesString("DISABLED_GODS")); //$NON-NLS-1$
@@ -266,6 +271,9 @@ public final class Game {
 		// Inicializamos OpenGL
 		UtilsGL.initGL(width, height, fullscreen);
 		UtilsAL.initAL(Game.getVolumeMusic(), Game.getVolumeFX());
+
+		// Set zoom options after OpenGL is initialized (to avoid triggering MainPanel static init too early)
+		MainPanel.setZoomOnCursor(zoomOnCursorValue);
 
 		// OpenGL 1.3 or better
 		String sVersion = GL11.glGetString(GL11.GL_VERSION);
@@ -1112,21 +1120,55 @@ public static void taskCreated(Task task) {
 
 		while (Mouse.next()) {
 			mouseButton = Mouse.getEventButton();
+			int eventMouseX = Mouse.getEventX();
+			int eventMouseY = UtilsGL.getHeight() - Mouse.getEventY() - 1;
+
+			// Debug: log every mouse button event
+			Log.log(Log.LEVEL_DEBUG, "Mouse button event: button=" + mouseButton + " state=" + Mouse.getEventButtonState(), getClass().toString());
+
+			// Deactivate pan mode on any mouse interaction (except middle button which is handled separately)
+			if (togglePanMode && mouseButton != 2) {
+				togglePanMode = false;
+				middleButtonScrolling = false;
+				Log.log(Log.LEVEL_DEBUG, "Pan mode deactivated by mouse button " + mouseButton, getClass().toString());
+			}
+
+			// Middle button scroll for camera panning (both press and release)
+			if (mouseButton == 2 && mouseScrollMiddleButtonON) {
+				if (Mouse.getEventButtonState()) {
+					// Middle button pressed
+					if (!middleButtonScrolling && !togglePanMode) {
+						middleButtonScrolling = true;
+						lastMouseX = eventMouseX;
+						lastMouseY = eventMouseY;
+						movementOccurred = false;
+						Log.log(Log.LEVEL_DEBUG, "Middle button pressed - middleButtonScrolling activated", getClass().toString());
+					}
+				} else {
+					// Middle button released
+					if (middleButtonScrolling) {
+						if (!movementOccurred) {
+							// No movement occurred - toggle pan mode
+							togglePanMode = !togglePanMode;
+							if (togglePanMode) {
+								lastMouseX = eventMouseX;
+								lastMouseY = eventMouseY;
+								Log.log(Log.LEVEL_DEBUG, "Pan mode activated (toggle)", getClass().toString());
+							} else {
+								Log.log(Log.LEVEL_DEBUG, "Pan mode deactivated (toggle)", getClass().toString());
+							}
+						}
+						middleButtonScrolling = false;
+					} else if (togglePanMode) {
+						// Pan mode was active, deactivate it
+						togglePanMode = false;
+						Log.log(Log.LEVEL_DEBUG, "Pan mode deactivated by middle button release", getClass().toString());
+					}
+				}
+				continue;
+			}
 
 			if (Mouse.getEventButtonState()) {
-				// Middle button scroll for camera panning
-				if (mouseButton == 2 && mouseScrollMiddleButtonON) {
-					if (!middleButtonScrolling) {
-						middleButtonScrolling = true;
-						lastMouseX = mouseX;
-						lastMouseY = mouseY;
-					}
-					continue;
-				} else if (mouseButton == 2 && middleButtonScrolling) {
-					middleButtonScrolling = false;
-					continue;
-				}
-
 				// Main menu
 				if (getPanelMainMenu().isActive()) {
 					getPanelMainMenu().mousePressed(mouseX, mouseY, mouseButton);
@@ -1205,15 +1247,16 @@ public static void taskCreated(Task task) {
 				}
 			}
 
-			// Middle button scroll for camera panning (movement while button held)
-			if (middleButtonScrolling && mouseScrollMiddleButtonON) {
-				int dx = mouseX - lastMouseX;
-				int dy = mouseY - lastMouseY;
+			// Middle button scroll for camera panning (movement while button held OR in toggle mode)
+			if ((middleButtonScrolling || togglePanMode) && mouseScrollMiddleButtonON) {
+				int dx = eventMouseX - lastMouseX;
+				int dy = eventMouseY - lastMouseY;
 
 				if (dx != 0 || dy != 0) {
 					MainPanel.scrollCamera(dx, dy);
-					lastMouseX = mouseX;
-					lastMouseY = mouseY;
+					lastMouseX = eventMouseX;
+					lastMouseY = eventMouseY;
+					movementOccurred = true;
 				}
 				continue;
 			}
@@ -1234,6 +1277,11 @@ public static void taskCreated(Task task) {
 				}
 				world.keyPressed(Keyboard.KEY_NONE, UtilsKeyboard.FN_LEVEL_DOWN);
 			}
+		}
+
+		// Continuous panning check (for touchpads that don't send movement events during button hold)
+		if ((middleButtonScrolling || togglePanMode) && mouseScrollMiddleButtonON) {
+			handleContinuousPan();
 		}
 
 		// Bordes (scroll de mouse)
@@ -1298,6 +1346,26 @@ public static void taskCreated(Task task) {
 					}
 				}
 			}
+		}
+	}
+
+	/**
+	 * Handle continuous panning for touchpads that don't send movement events during button hold.
+	 * Checks the current mouse position every frame and pans if the mouse has moved.
+	 */
+	private void handleContinuousPan() {
+		if (getWorld() == null) {
+			return;
+		}
+		int currentMouseX = Mouse.getX();
+		int currentMouseY = UtilsGL.getHeight() - Mouse.getY() - 1;
+		int dx = currentMouseX - lastMouseX;
+		int dy = currentMouseY - lastMouseY;
+
+		if (dx != 0 || dy != 0) {
+			MainPanel.scrollCamera(dx, dy);
+			lastMouseX = currentMouseX;
+			lastMouseY = currentMouseY;
 		}
 	}
 
@@ -1458,6 +1526,11 @@ public static void taskCreated(Task task) {
 			checkMouseEvents();
 			// Tratamos los eventos del teclado
 			checkKeyboardEvents();
+
+			// Continuous panning when middle button is held or toggle pan mode is active
+			if ((middleButtonScrolling || togglePanMode) && mouseScrollMiddleButtonON) {
+				handleContinuousPan();
+			}
 
 			// Game logic
 			if (!getPanelMainMenu().isActive()) {
@@ -2049,6 +2122,22 @@ public static void taskCreated(Task task) {
 
 	public static boolean isMouseScrollMiddleButtonON() {
 		return mouseScrollMiddleButtonON;
+	}
+
+	public static void setPanOnCamera(boolean panOnCamera) {
+		Game.panOnCamera = panOnCamera;
+	}
+
+	public static boolean isPanOnCamera() {
+		return panOnCamera;
+	}
+
+	public static void setZoomOnCursor(boolean zoomOnCursor) {
+		MainPanel.setZoomOnCursor(zoomOnCursor);
+	}
+
+	public static boolean isZoomOnCursor() {
+		return MainPanel.isZoomOnCursor();
 	}
 
 	public static void setMouse2DCubesON(boolean mouse2DCubesON) {

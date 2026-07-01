@@ -222,8 +222,9 @@ public final class MainPanel {
 		float zoom = getWorldZoom();
 		float sensitivity = 0.05f / zoom;
 
-		float deltaXView = -(dx + dy) * sensitivity;
-		float deltaYView = (dx - dy) * sensitivity;
+		float sign = Game.isPanOnCamera() ? -1f : 1f;
+		float deltaXView = -(dx + dy) * sensitivity * sign;
+		float deltaYView = (dx - dy) * sensitivity * sign;
 
 		int newXView = Math.round(xView + deltaXView);
 		int newYView = Math.round(yView + deltaYView);
