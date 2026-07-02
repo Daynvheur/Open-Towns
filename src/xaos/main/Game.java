@@ -1354,9 +1354,17 @@ public static void taskCreated(Task task) {
 		int dy = currentMouseY - lastMouseY;
 
 		if (dx != 0 || dy != 0) {
-			MainPanel.scrollCamera(dx, dy);
+			int y = getWorld().getView().y;
+			int x = getWorld().getView().x;
+			int sign = Game.isPanOnCamera() ? -1 : 1;
+			x += sign * (dx - dy) / 2;
+			y += sign * (dx + dy) / 2;
+			if (x >= 0 && y >= 0 && x < World.MAP_WIDTH && y < World.MAP_HEIGHT) {
+				getWorld().setView(x, y);
+			}
 			lastMouseX = currentMouseX;
 			lastMouseY = currentMouseY;
+			movementOccurred = true;
 		}
 	}
 
