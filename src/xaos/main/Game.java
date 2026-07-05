@@ -162,6 +162,7 @@ public final class Game {
 	private static boolean mouseScrollON;
 	private static boolean mouseScrollEarsON;
 	private static boolean mouse2DCubesON;
+	private static boolean zoomOnCursorValue;
 	private static boolean disabledItemsON;
 	private static boolean disabledGodsON;
 	private static boolean pauseStartON;
@@ -222,6 +223,7 @@ public final class Game {
 		mouseScrollON = Boolean.parseBoolean(Towns.getPropertiesString("MOUSE_SCROLL")); //$NON-NLS-1$
 		mouseScrollEarsON = Boolean.parseBoolean(Towns.getPropertiesString("MOUSE_SCROLL_EARS")); //$NON-NLS-1$
 		mouse2DCubesON = Boolean.parseBoolean(Towns.getPropertiesString("MOUSE_2D_CUBES")); //$NON-NLS-1$
+		zoomOnCursorValue = Boolean.parseBoolean(Towns.getPropertiesString("ZOOM_ON_CURSOR")); //$NON-NLS-1$
 		disabledItemsON = Boolean.parseBoolean(Towns.getPropertiesString("DISABLED_ITEMS")); //$NON-NLS-1$
 		disabledGodsON = Boolean.parseBoolean(Towns.getPropertiesString("DISABLED_GODS")); //$NON-NLS-1$
 		pauseStartON = Boolean.parseBoolean(Towns.getPropertiesString("PAUSE_START")); //$NON-NLS-1$
@@ -260,6 +262,7 @@ public final class Game {
 
 		// Inicializamos OpenGL
 		UtilsGL.initGL(width, height, fullscreen);
+		MainPanel.setZoomOnCursor(zoomOnCursorValue);
 		UtilsAL.initAL(Game.getVolumeMusic(), Game.getVolumeFX());
 
 		// OpenGL 1.3 or better
@@ -1082,10 +1085,14 @@ public static void taskCreated(Task task) {
 		if (!ctrlDown) {
 			return false;
 		}
+
+		int mouseX = Mouse.getX();
+		int mouseY = renderHeight - Mouse.getY() - 1;
+
 		if (wheelDelta > 0) {
-			MainPanel.zoomWorldIn();
+			MainPanel.zoomWorldIn(mouseX, mouseY);
 		} else {
-			MainPanel.zoomWorldOut();
+			MainPanel.zoomWorldOut(mouseX, mouseY);
 		}
 
 		return true;
@@ -2013,6 +2020,10 @@ public static void taskCreated(Task task) {
 
 	public static boolean isMouse2DCubesON() {
 		return mouse2DCubesON;
+	}
+
+	public static boolean isZoomOnCursorValue() {
+		return zoomOnCursorValue;
 	}
 
 	public static void setDisabledItemsON(boolean disabledItemsON) {
